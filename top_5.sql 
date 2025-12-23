@@ -1,0 +1,91 @@
+CREATE TABLE customes (
+customer_id INTEGER PRIMARY KEY,
+email TEXT UNIQUE,
+phone_number TEXT
+);
+
+ALTER TABLE customes
+ADD CONSTRAINT uq_customers_email UNIQUE (email);
+
+ALTER TABLE customes
+ALTER COLUMN phone_number SET NOT NULL;
+
+ALTER TABLE products
+ADD CONSTRAINT chk_products_price CHECK (price >= 0);
+
+ALTER TABLE sales 
+ADD CONSTRAINT chk_sales_total CHECK (total_sales >= 0);
+
+ALTER TABLE sales
+ADD COLUMN sales_channel TEXT;
+
+ALTER TABLE sales
+ADD CONSTRAINT chk_sales_channel
+CHECK (sales_channel IN('online','store'));
+
+UPDATE sales
+SET sales_channel = 'online'
+WHERE transaction_id % 2 = 0;
+
+-- At this point we make sure that the business rules are set. The business rules are:
+--1. Emails must be unique
+--2. Phone number column shouldn't contain emoty cells
+--3. The pirce and total sales results shoudn't be negative.
+--We add column sales channel in order to understand which funnel works more effecively.
+--To ensure that no random value will get into this column we add constraint that will allows us add only the options that we added in constraint.
+CREATE INDEX idx_sales_product_id
+ON sales (product_id);
+
+CREATE INDEX idx_products_category
+ON products (category);
+
+EXPLAIN 
+SELECT 
+product_id,
+SUM(total_sales) AS total_revenue
+FROM sales
+GROUP BY product_id;
+-- Even there is index on product_id, PostgresSQL does,t use it because it cheaper than index lookups.
+SELECT 
+transaction_id,
+product_id,
+total_sales
+FROM sales;
+-- It reduces the cost because PostgresSQL read less tha data and cache memory doesnt overload.
+--SELECT * is applicable when the data is small or you need to see all the scheme.
+EXPLAIN
+SELECT
+product_id,
+SUM(total_sales) AS total_revenue
+FROM sales
+GROUP BY product_id
+ORDER BY total_revenue DESC
+LIMIT 5;
+--Sorting cost equals 143.91.
+-- Indexes is no use for this case, because of SUM(total_sales) aggregation. 
+--Index is applicable when you need to find speicific value in the table.
+EXPLAIN
+SELECT DISTINCT
+  category,
+  price
+FROM products;
+
+EXPLAIN
+SELECT
+  category,
+  price
+FROM products
+GROUP BY category, price;
+-- The queries are similar because PostgresSQl treats it as equivalent operations.
+--The cost are similar generally, if not, the cheapest is decided based on table and memory size.
+--It optimizes the same way because the command returns the same category, prize unique outcome.
+UPDATE products
+SET price = -5
+WHERE product_id = 101;
+INSERT INTO customes (customer_id, email, phone_number)
+VALUES (999, 'anna@example.com', '091000999');
+--The constraint chk_products_price was triggered.
+--When you work with large data it ensures that you mistakenly wont break business rules.
+--uq_customers_email and phone_number not null have the highest business value because its the most common subject of error
+--In production environment I would prioritize product_id because customer_id would be of no use in some cases.
+-- One of the indicators is the high cost and memory size.

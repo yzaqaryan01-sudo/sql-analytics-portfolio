@@ -1,6 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS postgis;
 
-CREATE SCHEMA IF NOT EXISTS analytics;
 
 CREATE TABLE analytics.countries (
     country_id   INT PRIMARY KEY,

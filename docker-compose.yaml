@@ -24,6 +24,7 @@ services:
       - ./data:/docker-entrypoint-initdb.d/data:ro
       - ./data/analytics_schema:/data:ro
       - ./data/normalization_schema:/data:ro
+      - ./data/project_schema:/data:ro
 
   pgadmin:
     container_name: pgadmin_aca

@@ -62,11 +62,11 @@ SELECT
   c.first_name,
   c.last_name,
   ci.city_name
-FROM analytics.customers c
-JOIN analytics.customer_locations cl
+FROM analytics.customers AS c
+JOIN analytics.customer_locations AS cl
   ON c.customer_id = cl.customer_id
-JOIN analytics.cities ci
+JOIN analytics.cities AS ci
   ON c.city_id = ci.city_id
-JOIN analytics.city_boundaries cb
+JOIN analytics.city_boundaries AS cb
   ON ci.city_id = cb.city_id
   WHERE NOT ST_Within(cl.geom, cb.geom);
